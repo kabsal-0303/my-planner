@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>FinBoard v12.4</title>
+<title>FinBoard v12.6</title>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
@@ -748,6 +748,11 @@ const DEFAULT_DB = {
 const SK='finboard_v12';
 const clone=o=>structuredClone?structuredClone(o):JSON.parse(JSON.stringify(o));
 
+// ── JSONBin cloud sync ─────────────────────────
+const JB_BIN = '6a13723bee5a733b12136e94';
+const JB_KEY = '$2a$10$qs77Nj.75KOD.mwSKJjSl.OmGZ7V507hsLBf3SG.GSyb/MYKKr7Om';
+const JB_URL = `https://api.jsonbin.io/v3/b/${JB_BIN}`;
+
 // ── load + self-heal ──────────────────────────
 function loadDB(){
   // v12 key: trust fully
@@ -857,11 +862,23 @@ function budgetNav(dir){
 }
 
 // ── save / export ─────────────────────────────
-function saveAll(){
+async function saveAll(){
   syncUtils();
   db.meta.last_saved=new Date().toISOString();
   localStorage.setItem(SK,JSON.stringify(db));
-  updateLastSaved();
+  setText('last-saved-lbl','Saving...');
+  try{
+    const res=await fetch(JB_URL,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json','X-Master-Key':JB_KEY,'X-Bin-Versioning':'false'},
+      body:JSON.stringify(db)
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    updateLastSaved();
+  }catch(err){
+    setText('last-saved-lbl','Saved locally (offline)');
+    console.warn('JSONBin push failed:',err);
+  }
   render();
 }
 function exportData(){
@@ -876,6 +893,32 @@ function updateLastSaved(){
   if(!iso)return setText('last-saved-lbl','Not saved');
   const dt=new Date(iso);
   setText('last-saved-lbl',isNaN(dt)?'Not saved':dt.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}));
+}
+
+// ── load from JSONBin on startup ──────────────
+// Loads localStorage immediately for fast startup, then checks JSONBin.
+// If remote data is newer, it replaces local and re-renders.
+async function loadFromCloud(){
+  setText('last-saved-lbl','Syncing...');
+  try{
+    const res=await fetch(JB_URL+'?meta=false',{headers:{'X-Master-Key':JB_KEY}});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    const remote=json.record||json;
+    if(!remote||typeof remote!=='object'){updateLastSaved();return;}
+    const remoteTs=remote?.meta?.last_saved||'';
+    const localTs=db?.meta?.last_saved||'';
+    if(remoteTs>localTs){
+      db=remote;
+      heal();
+      localStorage.setItem(SK,JSON.stringify(db));
+      render();
+    }
+    updateLastSaved();
+  }catch(err){
+    updateLastSaved();
+    console.warn('JSONBin load failed:',err);
+  }
 }
 
 // ── privacy & theme ───────────────────────────
@@ -1370,6 +1413,8 @@ window.addEventListener('load',()=>{
   try{render();}catch(e){console.error('FinBoard v12 error:',e);}
   initPlannerSelects();
   runPlanner();
+  // Pull from JSONBin — if remote is newer, re-renders automatically
+  loadFromCloud();
 });
 window.addEventListener('resize',()=>{
   [_sankeyChart,_cfChart,_bPie,_bBar].forEach(c=>{if(c)c.resize();});
