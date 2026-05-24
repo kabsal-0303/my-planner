@@ -126,7 +126,52 @@ label{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacin
 .priv-on .sensitive{filter:blur(6px);user-select:none}
 /* views */
 .view{display:none}.view.active{display:block}
-hr{border:none;border-top:1px solid var(--bd);margin:11px 0}
+/* ── RESPONSIVE ───────────────────────────────
+   Targets: 1280px (small laptop), 1024px (tablet landscape)
+   Mobile excluded by design.
+─────────────────────────────────────────────── */
+@media (max-width:1280px){
+  .main{padding:66px 16px 20px;}
+  .stat-grid{grid-template-columns:repeat(4,1fr);gap:6px;}
+  .vlg{font-size:19px;}
+  .ch480{height:380px;}
+  .ch330{height:280px;}
+  .ch290{height:240px;}
+  .topnav-inner{gap:10px;}
+  .tab-btn{padding:5px 10px;font-size:9px;}
+  .act-btn{padding:0 8px;font-size:9px;}
+}
+@media (max-width:1024px){
+  .stat-grid{grid-template-columns:repeat(3,1fr);}
+  .vlg{font-size:17px;}
+  /* Overview: stack sankey + right column */
+  #view-overview > div[style*="1.6fr"]{grid-template-columns:1fr!important;}
+  /* Help grids: single column */
+  #view-help > div[style*="1fr 1fr"]{grid-template-columns:1fr!important;}
+  /* Planner controls: 2 columns */
+  #view-planner > div[style*="repeat(3"]{grid-template-columns:1fr 1fr!important;}
+  .ch480{height:320px;}
+  .ch330{height:240px;}
+  .topnav-tabs{gap:1px;}
+  .tab-btn{padding:5px 8px;font-size:9px;letter-spacing:.03em;}
+  .last-saved-txt{display:none;}
+  .act-sep{display:none;}
+}
+@media (max-width:860px){
+  .stat-grid{grid-template-columns:repeat(2,1fr);}
+  .g2{grid-template-columns:1fr;}
+  /* Bills: stack */
+  #view-bills > div.g2{grid-template-columns:1fr!important;}
+  /* Budget: stack */
+  #view-budget > div.g2{grid-template-columns:1fr!important;}
+  /* Goals: stack */
+  #view-goals > div.g2{grid-template-columns:1fr!important;}
+  /* Planner controls: single column */
+  #view-planner > div[style*="repeat(3"]{grid-template-columns:1fr!important;}
+  .topnav-tabs{overflow-x:auto;justify-content:flex-start;}
+  .topnav-actions{gap:3px;}
+  .act-btn{padding:0 7px;}
+}
 </style>
 </head>
 <body>
@@ -134,7 +179,7 @@ hr{border:none;border-top:1px solid var(--bd);margin:11px 0}
 <header class="topnav">
   <div class="topnav-inner">
     <div class="topnav-brand">
-      <div class="topnav-logo">v12.6</div>
+
       <div>
         <div class="topnav-title">FinBoard</div>
         <div class="topnav-sub" id="sb-sub">May 2026 · v12.6</div>
@@ -483,9 +528,10 @@ hr{border:none;border-top:1px solid var(--bd);margin:11px 0}
     <div class="card card-blue">
       <div class="card-hdr"><div class="card-title">System Overview</div></div>
       <div style="font-size:12px;color:var(--dim);line-height:1.9;">
-        FinBoard v12.6 is a single-file personal finance dashboard. All data is stored in <code style="color:var(--blue);font-family:'DM Mono',monospace;">localStorage</code> under key <code style="color:var(--blue);font-family:'DM Mono',monospace;">finboard_v12</code>. No backend, no server. ECharts 5 for charts. DM Sans + DM Mono + Syne for fonts.<br><br>
+        FinBoard v12.6 is a single-file personal finance dashboard. Data is synced to <strong style="color:var(--tx);">JSONBin</strong> (cloud) on every Save, and pulled from JSONBin on page load if the remote copy is newer. Falls back to <code style="color:var(--blue);font-family:'DM Mono',monospace;">localStorage</code> when offline. No backend server. ECharts 5 for charts. DM Sans + DM Mono + Syne for fonts.<br><br>
+        <strong style="color:var(--tx);">Storage:</strong> JSONBin bin <code style="color:var(--blue);font-family:'DM Mono',monospace;">finboard_v12</code> (primary) · localStorage (fallback)<br>
         <strong style="color:var(--tx);">Tabs:</strong> Overview · Goals · Cash Flow · Budget · Bills & Subs · Planner · Help<br>
-        <strong style="color:var(--tx);">Target viewport:</strong> MacBook Pro 14" — 1512×982px<br>
+        <strong style="color:var(--tx);">Target viewport:</strong> Any desktop screen (responsive)<br>
         <strong style="color:var(--tx);">Theme:</strong> Dark default, light toggle, persisted in <code style="font-family:'DM Mono',monospace;">fb_theme_v12</code>
       </div>
     </div>
@@ -617,6 +663,7 @@ hr{border:none;border-top:1px solid var(--bd);margin:11px 0}
   <div class="card card-orange" style="margin-bottom:13px;">
     <div class="card-hdr"><div class="card-title">Version History</div></div>
     <div style="font-size:12px;color:var(--dim);line-height:2;">
+      <strong style="color:var(--tx);">v12.6</strong> — JSONBin cloud sync (Save pushes to cloud, load pulls if newer) · Nav icon removed · Responsive layout for all desktop screens · Help tab updated<br>
       <strong style="color:var(--tx);">v12.6</strong> — Planner tab (16-month, all sliders, amortization, sweep engine) · Help tab · Layout fix (full-width pages) · Planner + Help added to nav<br>
       <strong style="color:var(--tx);">v12.6</strong> — Top-nav tabbed layout replacing sidebar · Sankey height 480px · nodeGap 8 for thicker lanes · Full viewport width<br>
       <strong style="color:var(--tx);">v12.4</strong> — Sidebar quick-stats panel · Grid gap fix (stretch) · Sankey label right margin 168px<br>
@@ -630,15 +677,16 @@ hr{border:none;border-top:1px solid var(--bd);margin:11px 0}
   <div class="card" style="background:rgba(77,158,255,.04);border-color:rgba(77,158,255,.2);">
     <div class="card-hdr"><div class="card-title">LLM Context Note</div></div>
     <div style="font-size:12px;color:var(--dim);line-height:1.9;">
-      If you are an AI assistant reading this: this dashboard belongs to a single user tracking personal finances across US and Kazakhstan accounts. The data model is stored in browser localStorage under <code style="font-family:'DM Mono',monospace;color:var(--blue);">finboard_v12</code>. The file is a self-contained single HTML file (~1600 lines). All calculations run client-side in vanilla JavaScript. No framework, no build step.<br><br>
+      If you are an AI assistant reading this: this dashboard belongs to a single user tracking personal finances across US and Kazakhstan accounts. Data is stored in JSONBin (cloud, primary) and <code style="font-family:'DM Mono',monospace;color:var(--blue);">localStorage</code> (fallback). Save pushes to JSONBin; page load pulls from JSONBin if remote is newer. Single HTML file (~1600 lines), all calculations client-side in vanilla JavaScript. No framework, no build step.<br><br>
       <strong style="color:var(--tx);">Key rules to preserve when modifying:</strong><br>
       1. Never break the localStorage schema — db.balances, db.rsu, db.budget, db.bills, db.meta must all remain intact<br>
       2. Payday: 15th + min(30, lastDayOfMonth). Feb = real last day. No 31st payday ever.<br>
       3. Sankey uses budget limits (projected). Stat surplus uses actual spending. They intentionally differ.<br>
       4. HYSA interest and Kaspi CD interest do NOT flow into Checking — informational only in ledger.<br>
       5. Car goal tracks Checking ONLY (not Checking + HYSA).<br>
-      6. Bump version in title, logo, subtitle, and this Help tab on every change.<br>
-      7. Preserve all subscription change/cancel dates exactly as specified in db.bills.subs.
+      6. Bump version in title, subtitle, and this Help tab on every change.<br>
+      7. Preserve all subscription change/cancel dates exactly as specified in db.bills.subs.<br>
+      8. JSONBin credentials (JB_BIN, JB_KEY, JB_URL) are constants near the top of the script — do not remove.
     </div>
   </div>
 </div>
